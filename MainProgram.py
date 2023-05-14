@@ -4,6 +4,7 @@ import traceback
 import execjs
 import requests
 
+# cookie参数
 cookies = {
     'WM_TID': '%2BXq3UQoVXFDTbYS%2Bz7FIfJJ2ba5VB6Us',
     '_ntes_nuid': 'aa976aeaebcb6ce1d6e06841c28b8361',
@@ -21,6 +22,7 @@ cookies = {
     'playerid': '92343383',
 }
 
+# 请求头参数
 headers = {
     'authority': 'music.163.com',
     'accept': '*/*',
@@ -47,7 +49,9 @@ params = {
 
 def search_music(song):
     global cookies, headers, params
-    jscode = execjs.compile(open('./param_encSeckey(search_music).js', 'r', encoding='utf-8').read()).call('get_info', song)
+    # 将音乐名传入到js文件中，加密生成data里的参数 'params' & 'encSecKey'
+    jscode = execjs.compile(open('./param_encSeckey(search_music).js', 'r', encoding='utf-8').read()).call('get_info',
+                                                                                                           song)
     data = {
         # 'params': 'qcmGOmNTiR7q0qRyMLTaTupGxxFx7xRO4SVXpDk9E3fGmw5kxD9rP1mlPXsGPPTM2RQngXRKqcJknuhAa22FK96fVX2/7hSneAH6vBt1AwPrKQsaZUVb1DldBEioO1WnHmGQy5IsYyziFx20onvUHf71/hyeX31VobQE4dplNzm+o/mERYyKq/H9xXoNwEcXoRJ4rZA05qiXzQH2KMc0zzwapbgG3Tg6skv9O44kxW1iGm4Av0HqD5yGjkm4ULPGKD9Wa/+jeR0/03BqHzorsoweTC+3paB8bixKPdt0Cxw=',
         # 'encSecKey': 'd2d7cac9076735c7b649baaf52d8fd84c6f559dfd7cae887a8d300fe7ba02fd660e1db9b38add3a2713d88a4bab460bcff2ddab18c711c5d539b20c3be3cba458d25586b78ad02e33f4c3bb803853fde8fa56837dbcabf94094c723ec45a2536c871662c517ef50fa567d43547562f93e890bd01e6282d20dd30177692adeb71',
@@ -55,6 +59,7 @@ def search_music(song):
         'encSecKey': jscode['encSecKey']
     }
     try:
+        # 发起音乐搜索请求
         response = requests.post(
             'https://music.163.com/weapi/cloudsearch/get/web',
             params=params,
@@ -69,28 +74,47 @@ def search_music(song):
         # print(response['result']['songs'])
         ss = response['result']['songs']
         id_list = []
-        for i, s in enumerate(ss):
-            # 创作人有多个，需要使用字符串拼接列表元素，展示出来  例如 / Name: Infinity (PRETTY YOUNG Remix) / Artist -- Jaymes Young/PRETTY YOUNG
-            artists = ' / '.join([x['name'] for x in s['ar']])
-            print(i, '/ Name: '+s['name'], f'/ Artist -- {artists}')
-            id_list.append(dict(num=i, id=s['id'], name=s['name'], arname=s['ar'][0]['name']))
-        # print(id_list)
-        s_num = int(input('请选择上述哪一首歌曲进行下载(输入编号)'))
-        try:
-            download_music(id_list[s_num]['id'], name=id_list[s_num]['name'], artist=id_list[s_num]['arname'])
-        except Exception:
-            tb = traceback.format_exc()
-            print(tb)
+        while True:
+            for i, s in enumerate(ss):
+                # 创作人有多个，需要使用字符串拼接列表元素，展示出来  例如 / Name: Infinity (PRETTY YOUNG Remix) / Artist -- Jaymes Young / PRETTY YOUNG
+                artists = ' / '.join([x['name'] for x in s['ar']])
+                # 输出搜索结果
+                print(i, '/ Name: ' + s['name'], f'/ Artist -- {artists}')
+                id_list.append(dict(num=i, id=s['id'], name=s['name'], arname=s['ar'][0]['name']))
+            # print(id_list)
+            # 选择下载的歌曲编号
+            inp = input('\n请选择上述哪一首歌曲进行下载(输入编号)  out==退出搜索 : ')
+            # 输入‘out’ 退出搜索，结束程序
+            if inp == 'out':
+                break
+            try:
+                s_num = int(inp)
+            except Exception as e:
+                print('\n\n', f'Error, {e}', '\n\n')
+                continue
+            else:
+                if (0 <= s_num < 20):
+                    try:
+                        download_music(id_list[s_num]['id'], name=id_list[s_num]['name'], artist=id_list[s_num]['arname'])
+                        break
+                    except Exception as e:
+                        print('Error\t', e)
+                else:
+                    print('输入的编号不符合， 请重新输入')
+                    continue
 
 
 def download_music(s_id, **kwargs):
     global params, cookies, headers
     jscode = execjs.compile(open('param_encSeckey.js', 'r', encoding='utf-8').read()).call('get_info', s_id)
+
     data = {
         'params': jscode['encText'],
         'encSecKey': jscode['encSecKey']
     }
+
     try:
+        #
         response = requests.post(
             'https://music.163.com/weapi/song/enhance/player/url/v1',
             params=params,
@@ -99,14 +123,18 @@ def download_music(s_id, **kwargs):
             data=data
         ).json()
         # print(response)
+
     except Exception as e:
         print('Get music_url Failed', e, sep='\n')
+
     else:
         m_url = response['data'][0]['url']
         print('url:', m_url)
         name, singer = kwargs['name'], kwargs['artist']
         # print(name, singer)
+
         try:
+            # 发起音乐下载请求
             song_resp = requests.get(m_url)
             form = m_url.split('.')[-1]
             print('response_status--', song_resp.status_code, sep='\n')
@@ -114,7 +142,8 @@ def download_music(s_id, **kwargs):
             print("Can't Download '{0}', Please try other way to download music".format(name), e, sep='\n')
 
         else:
-            file_path = f'E:/Python/Spiders/JS_Reverse/NetEaseMusicDownload/Audio/{name}'
+            # 音乐下载目录可自行设定，此处以E盘的Audio(提取创建好的)为例子
+            file_path = f'E:/Audio/{name}'
             # 文件去重
             if os.path.exists(f'{file_path}.{form}'):
                 print(f"{name + singer} already exists, skipping downlAsoad.")
