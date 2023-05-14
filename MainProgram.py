@@ -114,7 +114,7 @@ def download_music(s_id, **kwargs):
     }
 
     try:
-        #
+        # 获取下载地址
         response = requests.post(
             'https://music.163.com/weapi/song/enhance/player/url/v1',
             params=params,
@@ -136,17 +136,18 @@ def download_music(s_id, **kwargs):
         try:
             # 发起音乐下载请求
             song_resp = requests.get(m_url)
+            # 音乐格式根据m_url后缀确定(mp3 or m4a)
             form = m_url.split('.')[-1]
             print('response_status--', song_resp.status_code, sep='\n')
         except Exception as e:
-            print("Can't Download '{0}', Please try other way to download music".format(name), e, sep='\n')
+            print("Can't Download '{0} - {1}', Please try other way to download music".format(name, singer), e, sep='\n')
 
         else:
             # 音乐下载目录可自行设定，此处以E盘的Audio(提取创建好的)为例子
             file_path = f'E:/Audio/{name}'
             # 文件去重
             if os.path.exists(f'{file_path}.{form}'):
-                print(f"{name + singer} already exists, skipping downlAsoad.")
+                print(f"{name + singer} already exists, skipping download.")
                 return
             try:
                 with open(f'{file_path}.{form}', mode='wb') as f:
