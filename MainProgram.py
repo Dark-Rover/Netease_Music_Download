@@ -90,6 +90,7 @@ def search_music(song):
             try:
                 s_num = int(inp)
             except Exception as e:
+                # 输入有误
                 print('\n\n', f'Error, {e}', '\n\n')
                 continue
             else:
