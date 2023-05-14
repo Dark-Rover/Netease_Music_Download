@@ -76,7 +76,11 @@ def search_music(song):
             id_list.append(dict(num=i, id=s['id'], name=s['name'], arname=s['ar'][0]['name']))
         # print(id_list)
         s_num = int(input('请选择上述哪一首歌曲进行下载(输入编号)'))
-        download_music(id_list[s_num]['id'], name=id_list[s_num]['name'], artist=id_list[s_num]['arname'])
+        try:
+            download_music(id_list[s_num]['id'], name=id_list[s_num]['name'], artist=id_list[s_num]['arname'])
+        except Exception:
+            tb = traceback.format_exc()
+            print(tb)
 
 
 def download_music(s_id, **kwargs):
