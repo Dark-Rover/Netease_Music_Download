@@ -140,7 +140,7 @@ def download_music(s_id, **kwargs):
             form = m_url.split('.')[-1]
             print('response_status--', song_resp.status_code, sep='\n')
         except Exception as e:
-            print("Can't Download '{0} - {1}', Please try other way to download music".format(name, singer), e, sep='\n')
+            print("\nCan't Download '{0} - {1}', Please try other way to download music".format(name, singer), e, sep='\n\n')
 
         else:
             # 音乐下载目录可自行设定，此处以E盘的Audio(提取创建好的)为例子
