@@ -146,7 +146,7 @@ def download_music(s_id, **kwargs):
             file_path = f'E:/Audio/{name}'
             # 文件去重
             if os.path.exists(f'{file_path}.{form}'):
-                print(f"{name + singer} already exists, skipping downlAsoad.")
+                print(f"{name + singer} already exists, skipping download.")
                 return
             try:
                 with open(f'{file_path}.{form}', mode='wb') as f:
